@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Value Proposition Theme Heatmap — 19 Library & IT Organizations</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#ffffff;--bg-sec:#f5f4f0;--bg-ter:#eeece7;
+  --text:#1a1a18;--text-sec:#5f5e5a;
+  --border:rgba(0,0,0,.09);--border-med:rgba(0,0,0,.17);
+  --r-md:8px;--r-lg:12px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1a;--bg-sec:#252523;--bg-ter:#2e2e2b;
+    --text:#f0efe9;--text-sec:#9e9d97;
+    --border:rgba(255,255,255,.08);--border-med:rgba(255,255,255,.15);
+  }
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  background:var(--bg-ter);color:var(--text);
+  min-height:100vh;padding:2rem 1rem 3rem;
+}
+.page{max-width:1080px;margin:0 auto;}
+h1{font-size:20px;font-weight:500;margin-bottom:4px;}
+.sub{font-size:13px;color:var(--text-sec);margin-bottom:1.75rem;line-height:1.55;}
+
+.tabs{display:flex;gap:4px;margin-bottom:1.5rem;flex-wrap:wrap;}
+.tab{padding:7px 16px;border-radius:20px;font-size:13px;cursor:pointer;border:0.5px solid var(--border-med);background:transparent;color:var(--text-sec);transition:all .15s;font-family:inherit;}
+.tab:hover{border-color:var(--text);color:var(--text);}
+.tab.active{background:var(--text);color:var(--bg);border-color:transparent;}
+.section{display:none;}.section.active{display:block;}
+
+/* heatmap */
+.heatmap-scroll{overflow-x:auto;padding-bottom:8px;}
+.hm-table{border-collapse:collapse;font-size:11px;}
+.hm-corner{min-width:180px;padding:6px 8px;text-align:right;font-size:10px;color:var(--text-sec);}
+.hm-org-row td:first-child{
+  min-width:180px;padding:4px 10px 4px 8px;
+  white-space:nowrap;font-size:11px;color:var(--text);
+  cursor:pointer;
+}
+.hm-theme-label{
+  writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);
+  padding:8px 4px 4px;font-size:10px;color:var(--text);
+  height:130px;white-space:nowrap;cursor:pointer;
+  vertical-align:bottom;text-align:left;
+}
+.hm-cell{
+  width:36px;height:28px;cursor:pointer;
+  border:1.5px solid var(--bg-ter);
+  transition:transform .1s,box-shadow .1s;
+}
+.hm-cell:hover{transform:scale(1.18);box-shadow:0 2px 10px rgba(0,0,0,.25);z-index:10;position:relative;}
+.hm-total-cell{padding:4px 8px;text-align:center;font-size:11px;font-weight:600;}
+.hm-sum-row td{background:var(--bg-sec);padding:5px 6px;text-align:center;font-size:11px;font-weight:600;border:1px solid var(--border);}
+.hm-sum-label{text-align:right!important;font-size:10px;color:var(--text-sec);font-weight:400!important;}
+
+/* filter */
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;align-items:center;}
+.ftag{padding:3px 11px;border-radius:12px;font-size:11px;cursor:pointer;border:0.5px solid var(--border-med);background:transparent;color:var(--text-sec);font-family:inherit;transition:all .12s;}
+.ftag.active{color:var(--bg);border-color:transparent;}
+.ftag:hover:not(.active){border-color:var(--text);color:var(--text);}
+
+/* legend */
+.legend{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:1rem;font-size:11px;color:var(--text-sec);}
+.lsw{width:22px;height:14px;border-radius:3px;border:0.5px solid rgba(0,0,0,.1);}
+
+/* bars */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;cursor:pointer;}
+.bar-name{font-size:12px;color:var(--text-sec);min-width:200px;text-align:right;flex-shrink:0;}
+.bar-track{flex:1;background:var(--bg-sec);border-radius:3px;height:20px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;background:#1A5FA5;transition:width .4s;}
+.bar-val{font-size:11px;color:var(--text-sec);min-width:28px;flex-shrink:0;}
+.bar-orgs-detail{font-size:10px;color:var(--text-sec);margin-left:210px;margin-top:-2px;margin-bottom:5px;line-height:1.5;display:none;}
+
+/* co-occurrence */
+.co-scroll{overflow-x:auto;}
+.co-table{border-collapse:collapse;}
+.co-col-label{writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;color:var(--text-sec);padding:5px 3px 3px;vertical-align:bottom;white-space:nowrap;height:110px;text-align:left;}
+.co-row-label{font-size:9px;color:var(--text-sec);padding:3px 8px 3px 3px;white-space:nowrap;text-align:right;min-width:100px;}
+.co-cell{width:26px;height:22px;border:1px solid var(--bg-ter);cursor:pointer;font-size:8px;text-align:center;vertical-align:middle;transition:transform .1s;}
+.co-cell:hover{transform:scale(1.25);z-index:10;position:relative;}
+
+/* tooltip */
+#tt{position:fixed;pointer-events:none;z-index:999;background:var(--text);color:var(--bg);border-radius:8px;padding:8px 12px;font-size:12px;line-height:1.55;max-width:260px;opacity:0;transition:opacity .12s;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>Value proposition theme analysis</h1>
+<p class="sub">How 16 shared themes appear across the value propositions and impact statements of 19 library and IT organizations. Three views: heatmap, theme prevalence, and theme co-occurrence.</p>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('heatmap')">Org × theme heatmap</button>
+  <button class="tab" onclick="showTab('bars')">Theme prevalence</button>
+  <button class="tab" onclick="showTab('cooccur')">Theme co-occurrence</button>
+</div>
+
+<div id="tt"></div>
+
+<!-- HEATMAP -->
+<div class="section active" id="tab-heatmap">
+  <div class="legend">
+    <span style="margin-right:4px;">Theme in VP / impact statement:</span>
+    <div class="lsw" style="background:var(--bg-sec);"></div><span>Not expressed</span>
+    <div class="lsw" style="background:#1A5FA5;opacity:.85;margin-left:6px;"></div><span>Expressed</span>
+  </div>
+  <div class="filter-row" id="type-filters"></div>
+  <div class="heatmap-scroll"><table class="hm-table" id="hm-table"></table></div>
+  <p style="font-size:11px;color:var(--text-sec);margin-top:.75rem;">Hover any cell for details. Click the filter buttons above to focus on a member type.</p>
+</div>
+
+<!-- BARS -->
+<div class="section" id="tab-bars">
+  <p style="font-size:12px;color:var(--text-sec);margin-bottom:1.25rem;">Number of the 19 organizations expressing each theme in their VP or impact language. Click any row to reveal which organizations share that theme.</p>
+  <div id="bar-chart"></div>
+</div>
+
+<!-- CO-OCCURRENCE -->
+<div class="section" id="tab-cooccur">
+  <p style="font-size:12px;color:var(--text-sec);margin-bottom:1.25rem;">How often two themes appear together in the same organization's value proposition. Darker = more organizations share both themes simultaneously. Diagonal = theme with itself (self-count).</p>
+  <div class="legend" id="co-legend"></div>
+  <div class="co-scroll"><table class="co-table" id="co-table"></table></div>
+</div>
+
+</div>
+
+<script>
+const THEME_LONG=[
+  "Advance research & scholarship",
+  "Collaboration & community building",
+  "Open access / open knowledge",
+  "Equity, inclusion & public good",
+  "Digital transformation",
+  "Policy advocacy",
+  "Digital preservation & stewardship",
+  "Leadership & professional development",
+  "Data & research computing",
+  "Teaching & learning",
+  "Scholarly publishing",
+  "Shared infrastructure & interoperability",
+  "Global / international reach",
+  "Sustainability of knowledge systems",
+  "Workforce / career development",
+  "Societal / public good impact",
+];
+const TS=[
+  "Research","Collaboration","Open access","Equity","Digital transf.",
+  "Policy advocacy","Preservation","Leadership","Data/computing",
+  "Teaching","Publishing","Shared infra","Global","Sustainability",
+  "Workforce","Societal impact"
+];
+const ORGS=[
+  {a:"ARL",     n:"Assoc. of Research Libraries",           t:"Library-side",    c:"#185FA5"},
+  {a:"EDUCAUSE",n:"EDUCAUSE",                               t:"IT / Computing",  c:"#0F6E56"},
+  {a:"CLIR",    n:"Council on Library & Info Resources",    t:"Library-side",    c:"#993556"},
+  {a:"DLF",     n:"Digital Library Federation",             t:"Library-side",    c:"#0F6E56"},
+  {a:"SPARC",   n:"SPARC",                                  t:"Publishing / OA", c:"#A32D2D"},
+  {a:"BTAA",    n:"Big Ten Academic Alliance Libraries",    t:"Library-side",    c:"#854F0B"},
+  {a:"CASC",    n:"Coalition for Academic Sci. Computation",t:"IT / Computing",  c:"#3B6D11"},
+  {a:"Code4Lib",n:"Code4Lib",                               t:"Library-side",    c:"#444441"},
+  {a:"CSG",     n:"Common Solutions Group",                 t:"IT / Computing",  c:"#444441"},
+  {a:"DCC",     n:"Digital Curation Centre",                t:"IT / Computing",  c:"#185FA5"},
+  {a:"ERN",     n:"Ecosystem for Research Networking",      t:"IT / Computing",  c:"#3B6D11"},
+  {a:"ICOLC",   n:"Intl. Coalition of Library Consortia",   t:"Library-side",    c:"#534AB7"},
+  {a:"iSchools",n:"iSchools",                               t:"Library-side",    c:"#534AB7"},
+  {a:"Jisc",    n:"Jisc",                                   t:"International",   c:"#854F0B"},
+  {a:"LPC",     n:"Library Publishing Coalition",           t:"Publishing / OA", c:"#534AB7"},
+  {a:"NDSA",    n:"National Digital Stewardship Alliance",  t:"Library-side",    c:"#993C1D"},
+  {a:"RLUK",    n:"Research Libraries UK",                  t:"International",   c:"#3B6D11"},
+  {a:"CARL",    n:"Canadian Assoc. of Research Libraries",  t:"Library-side",    c:"#185FA5"},
+  {a:"ASIS&T",  n:"Assoc. for Info. Science & Technology",  t:"Library-side",    c:"#534AB7"},
+];
+const TC={
+  "Library-side":   {b:"#185FA5",l:"#E6F1FB"},
+  "IT / Computing": {b:"#0F6E56",l:"#E1F5EE"},
+  "Publishing / OA":{b:"#A32D2D",l:"#FCEBEB"},
+  "International":  {b:"#854F0B",l:"#FAEEDA"},
+};
+const MAT=[
+  [1,1,0,1,0,1,0,1,0,1,0,0,0,0,1,1],
+  [1,1,0,0,1,1,0,1,1,1,0,1,0,0,1,0],
+  [1,1,1,1,1,0,1,1,0,1,0,0,0,0,1,1],
+  [1,1,1,1,1,0,1,0,0,1,0,0,0,0,0,1],
+  [0,1,1,1,0,1,0,0,0,0,1,0,1,1,0,1],
+  [1,1,0,0,1,0,0,0,0,0,0,1,0,1,0,0],
+  [1,1,0,0,1,1,0,0,1,0,0,1,0,0,1,0],
+  [0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
+  [0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0],
+  [1,0,1,0,1,0,1,0,1,0,0,0,1,1,0,0],
+  [1,1,0,0,1,0,0,0,1,0,0,1,0,0,0,0],
+  [0,1,0,0,0,1,0,0,0,0,0,1,1,0,1,0],
+  [1,1,1,0,0,0,0,1,0,1,0,0,1,0,1,0],
+  [1,1,0,0,1,0,0,0,1,1,0,1,0,0,1,1],
+  [0,1,1,1,0,0,0,0,0,0,1,0,0,1,0,1],
+  [0,1,1,0,1,0,1,0,0,0,0,0,0,1,0,0],
+  [1,1,1,0,1,0,1,1,0,0,0,0,0,0,0,1],
+  [1,1,1,1,0,1,1,1,0,1,1,0,0,0,1,1],
+  [1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
+];
+
+function coColor(n,max){
+  if(!n)return"var(--bg-sec)";
+  const s=["#EEF5FB","#C5DBF0","#8AB8E0","#4A8FC4","#1A5FA5","#0D3D6E"];
+  return s[Math.min(Math.floor(n/max*(s.length-0.01)),s.length-1)];
+}
+
+const tt=document.getElementById("tt");
+function tip(e,h){tt.innerHTML=h;tt.style.opacity="1";mv(e);}
+function mv(e){tt.style.left=Math.min(e.clientX+14,window.innerWidth-270)+"px";tt.style.top=Math.min(e.clientY+14,window.innerHeight-90)+"px";}
+function hideTip(){tt.style.opacity="0";}
+document.addEventListener("mousemove",mv);
+
+function showTab(id){
+  ["heatmap","bars","cooccur"].forEach(x=>{
+    document.getElementById("tab-"+x).classList.toggle("active",x===id);
+  });
+  document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("active",["heatmap","bars","cooccur"][i]===id));
+}
+
+// TYPE FILTERS
+let typeF="all";
+(function(){
+  const types=["all","Library-side","IT / Computing","Publishing / OA","International"];
+  const labels=["All types","Library-side","IT / Computing","Publishing / OA","International"];
+  const el=document.getElementById("type-filters");
+  types.forEach((t,i)=>{
+    const c=TC[t];
+    const btn=document.createElement("button");
+    btn.className="ftag"+(t==="all"?" active":"");
+    btn.textContent=labels[i];
+    if(c){btn.style.background=c.l;btn.style.color=c.b;btn.style.borderColor=c.b+"55";}
+    btn.onclick=()=>{typeF=t;buildHM();document.querySelectorAll(".ftag").forEach(b=>b.classList.remove("active"));btn.classList.add("active");};
+    el.appendChild(btn);
+  });
+})();
+
+// HEATMAP
+function buildHM(){
+  const vis=ORGS.filter(o=>typeF==="all"||o.t===typeF);
+  const T=TS.length;
+  let h="<thead><tr><th class='hm-corner'></th>";
+  TS.forEach(s=>{h+=`<th class="hm-theme-label">${s}</th>`;});
+  h+="<th style='padding:4px 6px;font-size:10px;color:var(--text-sec);text-align:center;vertical-align:bottom;'>Total</th></tr></thead><tbody>";
+  vis.forEach(org=>{
+    const oi=ORGS.indexOf(org);
+    const row=MAT[oi];
+    const tot=row.reduce((s,v)=>s+v,0);
+    h+=`<tr class="hm-org-row">
+      <td style="min-width:180px;padding:4px 10px 4px 8px;white-space:nowrap;border-left:3px solid ${org.c};">
+        <span style="color:${org.c};font-weight:600;font-size:11px;">${org.a}</span>
+        <span style="font-size:10px;color:var(--text-sec);margin-left:5px;">${org.n}</span>
+      </td>`;
+    row.forEach((v,ti)=>{
+      const bg=v?"#1A5FA5":"var(--bg-sec)";
+      h+=`<td class="hm-cell" style="background:${bg};"
+           onmouseenter="tip(event,'<strong>${org.a}</strong> × <strong>${THEME_LONG[ti]}</strong><br>${v?'✓ Present in VP / impact statement':'✗ Not expressed'}')"
+           onmouseleave="hideTip()"></td>`;
+    });
+    h+=`<td class="hm-total-cell" style="color:${org.c};font-size:12px;padding:4px 8px;">${tot}</td></tr>`;
+  });
+  // totals row
+  h+="<tr>";
+  h+=`<td class="hm-sum-label" style="padding:5px 10px;text-align:right;font-size:10px;color:var(--text-sec);background:var(--bg-sec);">Theme total</td>`;
+  TS.forEach((_,ti)=>{
+    const tot=vis.reduce((s,o)=>s+MAT[ORGS.indexOf(o)][ti],0);
+    const max=vis.length;
+    const bg=coColor(tot,max);
+    const fg=tot>max*0.6?"#fff":"var(--text)";
+    h+=`<td style="background:${bg};color:${fg};text-align:center;padding:5px 4px;font-size:11px;font-weight:600;border:1px solid var(--border);"
+         onmouseenter="tip(event,'<strong>${THEME_LONG[ti]}</strong><br>${tot} of ${max} visible orgs (${Math.round(tot/max*100)}%)')"
+         onmouseleave="hideTip()">${tot}</td>`;
+  });
+  h+="<td style='background:var(--bg-sec);border:1px solid var(--border);'></td></tr></tbody>";
+  document.getElementById("hm-table").innerHTML=h;
+}
+
+// BARS
+function buildBars(){
+  const counts=TS.map((s,ti)=>({
+    ti,s,
+    count:MAT.reduce((sum,r)=>sum+r[ti],0),
+    orgs:ORGS.filter((_,oi)=>MAT[oi][ti]).map(o=>o.a)
+  })).sort((a,b)=>b.count-a.count);
+
+  document.getElementById("bar-chart").innerHTML=counts.map(d=>`
+    <div class="bar-row" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+      <div class="bar-name">${d.s}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(d.count/19*100)}%;"></div></div>
+      <div class="bar-val">${d.count}<span style="font-size:9px;color:var(--text-sec);"> /19</span></div>
+    </div>
+    <div class="bar-orgs-detail">${d.orgs.join(' · ')}</div>
+  `).join('');
+}
+
+// CO-OCCURRENCE
+function buildCo(){
+  const T=TS.length;
+  const co=Array.from({length:T},()=>new Array(T).fill(0));
+  MAT.forEach(r=>{for(let i=0;i<T;i++)for(let j=0;j<T;j++)if(r[i]&&r[j])co[i][j]++;});
+  const mx=Math.max(...co.map((r,i)=>r.filter((_,j)=>j!==i)).flat());
+
+  const lg=document.getElementById("co-legend");
+  const s=["#EEF5FB","#C5DBF0","#8AB8E0","#4A8FC4","#1A5FA5","#0D3D6E"];
+  lg.innerHTML='<span style="margin-right:5px;">Co-occurrence count:</span>';
+  s.forEach((c,i)=>{
+    const v=i===0?0:i===s.length-1?mx:Math.round((i/(s.length-1))*mx);
+    lg.innerHTML+=`<div style="display:flex;align-items:center;gap:3px;"><div class="lsw" style="background:${c};border:0.5px solid rgba(0,0,0,.1);"></div><span>${i===0?'0':i===s.length-1?mx:''}</span></div>`;
+  });
+
+  let h="<thead><tr><th style='min-width:14px;'></th>";
+  TS.forEach(s=>{h+=`<th class="co-col-label">${s}</th>`;});
+  h+="</tr></thead><tbody>";
+  TS.forEach((rowS,i)=>{
+    h+=`<tr><td class="co-row-label">${rowS}</td>`;
+    TS.forEach((_,j)=>{
+      const n=co[i][j];
+      const diag=i===j;
+      const bg=diag?"var(--bg-sec)":coColor(n,mx);
+      const fg=(n>mx*0.6&&!diag)?"#fff":"var(--text-sec)";
+      h+=`<td class="co-cell" style="background:${bg};color:${fg};"
+           onmouseenter="tip(event,${diag}?'<strong>${TS[i]}</strong><br>Self (${n} orgs express this theme)'
+             :'<strong>${TS[i]}</strong> + <strong>${TS[j]}</strong><br>${n} of 19 orgs express both')"
+           onmouseleave="hideTip()">${diag?'':n||''}</td>`;
+    });
+    h+="</tr>";
+  });
+  document.getElementById("co-table").innerHTML=h+"</tbody>";
+}
+
+buildHM();buildBars();buildCo();
+</script>
+</body>
+</html>
